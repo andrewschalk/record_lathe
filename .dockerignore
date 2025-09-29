@@ -1,0 +1,13 @@
+# Ignore all colcon build outputs
+build/
+install/
+log/
+
+# Ignore any nested build/install/log inside packages
+**/build
+**/install
+**/log
+
+# Ignore Python cache files
+**/__pycache__/
+**/*.pyc

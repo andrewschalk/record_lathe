@@ -1,0 +1,15 @@
+# Ignore ROS 2 build items
+ros2_ws/build/
+ros2_ws/install/
+ros2_ws/log/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# VS Code
+.vscode/
+
+# OS-specific
+.DS_Store
+Thumbs.db

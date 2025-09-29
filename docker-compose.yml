@@ -1,0 +1,18 @@
+version: "3.9"
+
+services:
+  ros:
+    build: .
+    image: ros:vinyl_cutter
+    container_name: ros_kilted
+    stdin_open: true
+    tty: true
+    volumes:
+      - ./ros2_ws:/root/ros2_ws
+      - /tmp/.X11-unix:/tmp/.X11-unix  # share X11 socket
+    environment:
+      - ROS_DOMAIN_ID=101
+      - DISPLAY=${DISPLAY}             # pass DISPLAY variable
+    working_dir: /root/ros2_ws
+    ports:
+      - "5000:5000"   # host:container

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vinyl Cutter Control Panel</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background-color: #121212; color: #f8f9fa; }
+    .header { background-color: #1f1f1f; padding: 1rem; text-align: center; }
+    .card { background-color: #1f1f1f; color: #f8f9fa; margin-bottom: 20px; }
+  </style>
+</head>
+<body>
+
+  <header class="header">
+    <h1>Vinyl Cutter Control Panel</h1>
+  </header>
+
+  <main class="container mt-4">
+
+    <!-- Setup Card -->
+    <div class="card p-4 text-center" style="max-width: 400px; margin: auto;">
+      <h2>Setup</h2>
+      <h6>Upload .wav</h6>
+      <div class="mb-3">
+        <input type="file" id="fileInput" class="form-control mb-2">
+        <button id="uploadFileBtn" class="btn btn-warning">Upload File</button>
+      </div>
+
+      <div class="mb-3">
+        <h6>Outer Diameter</h6>
+        <input type="text" id="outerDiaText" class="form-control mb-2" placeholder="Enter Outer Diameter">
+        <h6>Inner Diameter</h6>
+        <input type="text" id="innerDiaText" class="form-control mb-2" placeholder="Enter Inner Diameter">
+        <button id="submitDiaBtn" class="btn" style="background-color: #0dcaf0; color: black;">Submit Diameters</button>
+      </div>
+    </div>
+
+    <!-- Controls Card -->
+    <div class="card p-4 text-center gap-2" style="max-width: 400px; margin: auto;">
+      <h2>Controls</h2>
+      <div class="d-flex justify-content-center gap-2">
+        <button id="cycleStartBtn" class="btn w-50" style="background-color: green; color: black;">Cycle Start</button>
+        <button id="eStopBtn" class="btn w-50" style="background-color: red; color: black;">E-Stop</button>
+      </div>
+      <div class="d-flex justify-content-center gap-2">
+        <button id="RTHBtn" class="btn w-50" style="background-color: #0dcaf0; color: black;">Return to Home</button>
+        <button id="setHomeBtn" class="btn w-50" style="background-color: #0dcaf0; color: black;">Set Home</button>
+      </div>
+    </div>
+    <!-- Status Message -->
+    <div id="status" class="text-center mt-3"></div>
+  </main>
+
+  <script>
+    const statusDiv = document.getElementById('status');
+
+    function showMessage(msg, color="white") {
+      statusDiv.innerText = msg;
+      statusDiv.style.color = color;
+    }
+
+    // Cycle Start button
+    document.getElementById('cycleStartBtn').addEventListener('click', () => {
+      fetch('/cycle_start_action', { method: 'POST' })
+        .then(() => showMessage("Cycle Start pressed", "green"))
+        .catch(err => showMessage("Error: " + err, "red"));
+    });
+
+    // E-Stop button
+    document.getElementById('eStopBtn').addEventListener('click', () => {
+      fetch('/e_stop_action', { method: 'POST' })
+        .then(() => showMessage("E-Stop pressed", "red"))
+        .catch(err => showMessage("Error: " + err, "red"));
+    });
+
+    // Submit Diameters
+    document.getElementById('submitDiaBtn').addEventListener('click', () => {
+      const outer = document.getElementById('outerDiaText').value;
+      const inner = document.getElementById('innerDiaText').value;
+      fetch('/submit_dia', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ outer: outer ,inner:inner})
+      })
+      .then(() => showMessage("Disk Constants set \n Outer Diameter: " + outer + "\n Inner Diameter: " + inner + "\nMax playtime: "+ Math.floor((outer-inner)*10/60)+":" + ((outer-inner)*10)%60, "cyan"))
+      .catch(err => showMessage("Error: " + err, "red"));
+    });
+
+    // Upload File
+    document.getElementById('uploadFileBtn').addEventListener('click', () => {
+      const fileInput = document.getElementById('fileInput');
+      if(fileInput.files.length === 0) {
+        showMessage("No file selected", "yellow");
+        return;
+      }
+      const formData = new FormData();
+      formData.append('file', fileInput.files[0]);
+      fetch('/upload_file', { method: 'POST', body: formData })
+        .then(() => showMessage("File uploaded: " + fileInput.files[0].name, "lightgreen"))
+        .catch(err => showMessage("Error: " + err, "red"));
+    });
+
+    // RTH button
+    document.getElementById('RTHBtn').addEventListener('click', () => {
+      fetch('/RTH_action', { method: 'POST' })
+        .then(() => showMessage("Return to Home Pressed", "cyan"))
+        .catch(err => showMessage("Error: " + err, "red"));
+    });
+
+    // Set Home button
+    document.getElementById('setHomeBtn').addEventListener('click', () => {
+      fetch('/set_home_action', { method: 'POST' })
+        .then(() => showMessage("Set Home Pressed", "cyan"))
+        .catch(err => showMessage("Error: " + err, "red"));
+    });
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
