@@ -11,6 +11,7 @@ class VinylCutter(Node):
     def __init__(self):
         super().__init__('vinyl_cutter')
 
+        # Create subscriptions
         self.subscription_inner_dia = self.create_subscription(
             Int32,
             'inner_dia',
@@ -21,39 +22,47 @@ class VinylCutter(Node):
             'outer_dia',
             self.outer_dia_callback,
             10)
-        self.inner_dia = None
-        self.outer_dia = None
-
-        self.publisher_play_audio = self.create_publisher(Bool, 'play_audio', 10)
-
         self.subscription_audio_done = self.create_subscription(
             Bool,
             'audio_done',
             self.audio_done_callback,
             10)
-
-
-        self.publisher_r_setpoint = self.create_publisher(Float32, 'r_setpoint', 10)
-        self.publisher_theta_setpoint = self.create_publisher(Float32, 'theta_setpoint', 10)
-        self.publisher_r_pos_set = self.create_publisher(Float32, 'r_pos_set', 10)
-
         self.subscription_cycle_start = self.create_subscription(
             Bool,
             'cycle_start',
             self.cycle_start_callback,
             10)
 
+        # Create publishers
+        self.publisher_play_audio = self.create_publisher(Bool, 'play_audio', 10)
+        self.publisher_r_setpoint = self.create_publisher(Float32, 'r_setpoint', 10)
+        self.publisher_theta_setpoint = self.create_publisher(Float32, 'theta_setpoint', 10)
+        self.publisher_r_pos_set = self.create_publisher(Float32, 'r_pos_set', 10)
+
     def inner_dia_callback(self, msg):
+        """Set the value of the inner diameter published on the inner_dia topic"""
         self.inner_dia = msg.data
         self.get_logger().info(f'Received inner diameter: {self.inner_dia}')
 
     def outer_dia_callback(self, msg):
+        """Set the value of the outer diameter published on the outer_dia topic"""
         self.outer_dia = msg.data
         self.get_logger().info(f'Received outer diameter: {self.outer_dia}')
 
     def cycle_start_callback(self,msg):
+        """ Runs through the whole disc cutting process
+        Disc cutting process:
+        Home R axis
+        Spin disc at 33.3 RPM
+        Move R axis to outer edge of disc
+        Move R axis at cutting speed towards center of disc
+        Play audio while cutting
+        Stop R-axis after audio is finished
+        Stop theta axis
+        """
         # Home r axis
         msg = Float32()
+        msg.data = -20  # TODO Figure out acceptable speed
         self.publisher_r_setpoint()
         
         # Spin up disk
@@ -76,8 +85,8 @@ class VinylCutter(Node):
         msg.data = True
         self.publisher_play_audio.publish(msg)
 
-    # This is called after the audio file has finished playing, and finishes off the cut
     def audio_done_callback(self, future_audio):
+        """ This is called during the cutting process after the audio file has finished playing, and finishes off the cut"""
         # Stop R-axis
         msg = Float32()
         msg.data = 0

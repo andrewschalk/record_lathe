@@ -19,6 +19,8 @@ class Speakers(Node):
         """Plays the audio file stored at ./audio/audio.wav when the play_audio topic is published to"""
         self.get_logger().info('Playing audio')
         
+        # Use Pygame to play the audio file
+        # Uses the default audio output on the host. Set to the 3.5mm audio jack
         pygame.mixer.init()
         pygame.mixer.music.load("audio/audio.wav")
         pygame.mixer.music.play()
@@ -31,8 +33,6 @@ class Speakers(Node):
         msg = Bool()
         msg.data = True
         self.publisher_audio_done.publish(msg)
-
-
 
 def main(args=None):
         try:

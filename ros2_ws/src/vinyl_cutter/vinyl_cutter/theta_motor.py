@@ -14,6 +14,23 @@ class ThetaMotor(Node):
             'theta_setpoint',
             self.theta_setpoint_callback,
             10)
+        
+        # PID subscriptions. Allows for the changing of pid constants while testing
+        self.subscription_theta_P = self.create_subscription(
+            Float32,
+            'theta_P',
+            self.theta_P_callback,
+            10)
+        self.subscription_theta_I = self.create_subscription(
+            Float32,
+            'theta_I',
+            self.theta_I_callback,
+            10)
+        self.subscription_theta_D = self.create_subscription(
+            Float32,
+            'theta_D',
+            self.theta_D_callback,
+            10)
 
         # PID parameters
         self.kp = 1.0
@@ -38,6 +55,15 @@ class ThetaMotor(Node):
 
     def theta_setpoint_callback(self,msg):
         self.setpoint=msg.data
+
+    def theta_P_callback(self,msg):
+        self.kp=msg.data
+
+    def theta_I_callback(self,msg):
+        self.ki=msg.data
+
+    def theta_D_callback(self,msg):
+        self.kd=msg.data
 
     def control_loop(self):
         """Controls the PID for the motor"""
