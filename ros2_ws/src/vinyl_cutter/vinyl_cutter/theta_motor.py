@@ -47,14 +47,16 @@ class ThetaMotor(Node):
         # Motor controller initialization
         self.motor_controller = Board(1,0x10)
         self.motor_controller.begin()
-        self.motor_controller.set_moter_pwm_frequency(20000)
+        self.motor_controller.set_moter_pwm_frequency(12750)
         self.motor_controller.set_encoder_enable(self.motor_controller.ALL)
+        self.motor_controller.set_encoder_reduction_ratio(self.motor_controller.ALL, 1)
 
-        # Control loop, run every 0.01 s
-        self.timer = self.create_timer(0.01, self.control_loop)
+        # Control loop, run every 0.001 s
+        self.timer = self.create_timer(0.1, self.control_loop)
 
     def theta_setpoint_callback(self,msg):
-        self.setpoint=msg.data
+        self.get_logger().debug(f"Received setpoint: {msg.data}")
+        self.theta_setpoint = msg.data
 
     def theta_P_callback(self,msg):
         self.kp=msg.data
@@ -75,11 +77,13 @@ class ThetaMotor(Node):
         if self.theta_setpoint == 0:
             self.last_error = 0
             self.integral   = 0
-            self.motor_controller.motor_movement([self.motor_controller.M1], self.motor_controller.CW,0)
+            self.motor_controller.motor_movement([self.motor_controller.M2], self.motor_controller.CW,0)
             return
 
         # Find and save current speed
-        self.speed = self.motor_controller.get_encoder_speed(self.motor_controller.M1)
+        self.speed = -self.motor_controller.get_encoder_speed([self.motor_controller.M2])[0]/43
+
+        self.get_logger().debug(f"Speed: {self.speed}")
 
         # Compute error
         error = self.theta_setpoint - self.speed
@@ -89,17 +93,18 @@ class ThetaMotor(Node):
         derivative    = (error - self.last_error) / dt
         output        = self.kp*error + self.ki*self.integral + self.kd*derivative
         
-        # Stop commands above full
-        if output>100:
-            output = 100
-        if output<-100:
-            output = -100
+        # Stop commands above full (100% duty cycle breaks so instead use 95)
+        if output>95:
+            output = 95
+        if output<-95:
+            output = -95
 
+        self.get_logger().debug(f"Command: {output}")
         # Determine whether CW or CCW
         if output>0:
-            self.motor_controller.motor_movement([self.motor_controller.M1], self.motor_controller.CW,output)
+            self.motor_controller.motor_movement([self.motor_controller.M2], self.motor_controller.CW,output)
         else:
-            self.motor_controller.motor_movement([self.motor_controller.M1], self.motor_controller.CCW,abs(output))
+            self.motor_controller.motor_movement([self.motor_controller.M2], self.motor_controller.CCW,abs(output))
         
         self.last_error = error
 

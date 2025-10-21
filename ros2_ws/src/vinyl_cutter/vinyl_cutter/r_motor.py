@@ -94,6 +94,7 @@ class RMotor(Node):
 
     def r_setpoint_callback(self,msg):
         """Saves the speed setpoint when it is published to the r_setpoint topic"""
+        self.pos_set=0 # If a position was previously set, we no longer want to follow it
         self.setpoint=msg.data
 
     def r_pos_set_callback(self,msg):
@@ -134,7 +135,7 @@ class RMotor(Node):
         self.position += self.motor_controller.get_encoder_speed(self.motor_controller.M1)*dt
 
         # Check whether we are setting the speed or position of the motor
-        if self.pos_set == 0: # if the position is set to zero then obey the speed PID
+        if self.setpoint == 0: # if the position is set to zero then obey the speed PID
             output = self.speed_pid(dt)
         else: # Otherwise obey the position PID
             output = self.pos_pid(dt)
